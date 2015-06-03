@@ -1,4 +1,4 @@
-# Hl7::Push::Server
+# Hl7 Push Server
 
 Emulates a practice management or electronic health record system that outputs HL7 messages via MLLP once a client has connected
 via a TCP connection.  Useful for testing healthcare software integration with services that require the consuming application to connect.
