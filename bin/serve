@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby
+require 'hl7-push-server'
+
+port = ARGV[0].nil? ? 5900 : ARGV[0]
+host = HL7PushServer::Host.new do |config|
+  config.port = port
+end
+host.run
