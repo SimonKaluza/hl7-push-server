@@ -19,7 +19,6 @@ module HL7PushServer
     end
 
     def run
-      frame_count = 0
       while true
         res = select(@descriptors, nil, nil, 0)
         if res != nil then
@@ -32,9 +31,7 @@ module HL7PushServer
               # Received end of file from a client socket
               if sock.eof? then
                 # Disconnect and clean up socket
-                puts "Client #{sock.peeraddr[2]}:#{sock.peeraddr[1]} disconnected"
-                sock.close
-                @descriptors.delete(sock)
+                disconnect_socket(sock)
               else
                 # Output the message the client sent (arbitrary maximum bytes to receive)
                 puts "Client #{sock.peeraddr[2]}:#{sock.peeraddr[1]}: #{sock.gets("\r")}"
@@ -42,17 +39,27 @@ module HL7PushServer
             end
           end
         end
-        if frame_count == 100000
-          each_client do |client|
-            client.write("#{@messages[Random.rand(0..3)]}\r")
+        each_client do |client_socket|
+          begin
+            client_socket.write("#{@messages[Random.rand(0..3)]}\r")
+          rescue Errno::EPIPE => e
+            disconnect_socket(client_socket)
           end
-          frame_count = 0
         end
-        frame_count += 1
       end
     end
 
     private
+
+    def disconnect_socket(sock)
+      begin
+        sock.close
+        @descriptors.delete(sock)
+        puts "Client #{sock.peeraddr[2]}:#{sock.peeraddr[1]} disconnected"
+      rescue => e
+        $stderr.puts "Socket closed abrupty.  Freed resources but exitting client IP address not logged."
+      end
+    end
 
     def each_client
       @descriptors.each do |socket|
